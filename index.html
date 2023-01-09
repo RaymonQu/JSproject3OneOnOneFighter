@@ -5,28 +5,47 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fighter</title>
+    <link rel="stylesheet" href="fightStyle.css">
+    <script src="fightScript.js"></script>
 </head>
 <body onload="initialize()">
 
-    <h1>Fight Simulator</h1>
-
-    <div class="fighterOneContainer">
-        <div class="boxOne">
-            <img src="images/NokNok.webp" alt="goblin">
+    <h1>Fighter Battle to the Death</h1>
+    <h2>Rules: The goal of this game is to battle your opponent to the death.
+         This is done by attacking them until their fatigue is zero.
+         The computer will fight back and chooses their decision to attack or defend randomly. 
+         Each character also has some natural armor even when not defending, granting damage reduction.
+         When your fatigue is twice theirs or their fatigue is below 0,
+         you can finishing blow them and knock them out if it hits (passes through defend).
+         Fatigue is healed by a bit every time a character is not attacked.
+         Stats of each fighter is shown below their image along with their previous action.</h2>
+    <div class="flex">
+        <div class="fighterOneContainer">
+            <h3>Player</h3>
+            <div class="boxOne">
+                <img id="img1" src="images/NokNok.webp" alt="fighter1">
+            </div>
+            <p id="playerStats">Fatigue:  Strength:  Cunning:  Speed:</p>
+            <div id="logOne">
+                <p id="playerAction"></p>
+            </div>   
+            <div class="buttonContainer">
+                <button onclick="playerAction(1)"> Attack </button>
+                <button onclick="playerAction(2)"> Defend </button>
+                <button id="finish" onclick="playerAction(3)"> Finishing Blow </button>
+            </div>   
         </div>
-        <div id="logTwo">
-            
-        </div>      
+
+        <div class="fighterTwoContainer">
+            <h3>Computer</h3>
+            <div id="boxTwo">
+                <img id="img2" src="images/nob.jpg" alt="fighter2">
+            </div>
+            <p id="compStats">Fatigue:  Strength:  Cunning:  Speed:</p>
+            <div id="logTwo">
+                <p id="compAction"></p>
+            </div>
+        </div>
     </div>
-
-    <div class="fighterOneContainer">
-        <div id="boxTwo">
-            <img src="images/magik.png" alt="fishe">
-        </div>
-        <div id="logTwo">
-
-        </div>
-    </div>
-
 </body>
 </html>
