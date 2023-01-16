@@ -1,19 +1,32 @@
 function initialize(){
+    killSuc = null;
+    playerNaturalArmor = 0;
+    computerNaturalArmor = 0;
     lastCompAct = null;
     gameOver = false;
     playerStats = [];
     compStats = [];
+    
     increaseOrDecrease(playerStats);
     increaseOrDecrease(compStats);
+
     maxPF = playerStats[3];
     maxCF = compStats[3];
+
+    pSTR = playerStats[0];
+    pCUN = playerStats[1];
+    pSPE = playerStats[2];
+    cSTR = compStats[0];
+    cCUN = compStats[1];
+    cSPE = compStats[2];
+
     displayPStat = document.getElementById("playerStats");
-    displayPStat.innerHTML = "Strength: " + playerStats[0] + " Cunning: " + 
-                              playerStats[1] + " Speed: " + playerStats[2] + " Fatigue: " 
+    displayPStat.innerHTML = "Strength: " + pSTR + " Cunning: " + 
+                              pCUN + " Speed: " + pSPE + " Fatigue: " 
                               + playerStats[3];
     displayCStat = document.getElementById("compStats");
-    displayCStat.innerHTML = "Strength: " + compStats[0] + " Cunning: " + 
-                              compStats[1] + " Speed: " + compStats[2] + " Fatigue: " 
+    displayCStat.innerHTML = "Strength: " + cSTR + " Cunning: " + 
+                              cCUN + " Speed: " + cCUN + " Fatigue: " 
                               + compStats[3];
 }
 
@@ -47,12 +60,12 @@ function randomNum(max, min){
 function updateStats(){
     if(!gameOver){
         displayPStat = document.getElementById("playerStats");
-        displayPStat.innerHTML = "Strength: " + playerStats[0] + " Cunning: " + 
-                                playerStats[1] + " Speed: " + playerStats[2] + " Fatigue: " 
+        displayPStat.innerHTML = "Strength: " + pSTR + " Cunning: " + 
+                                pCUN + " Speed: " + pSPE + " Fatigue: " 
                                 + playerStats[3];
         displayCStat = document.getElementById("compStats");
-        displayCStat.innerHTML = "Strength: " + compStats[0] + " Cunning: " + 
-                                compStats[1] + " Speed: " + compStats[2] + " Fatigue: " 
+        displayCStat.innerHTML = "Strength: " + cSTR + " Cunning: " + 
+                                cCUN + " Speed: " + cSPE + " Fatigue: " 
                                 + compStats[3];
         if(compStats[3] < 0 || playerStats[3] >= (2 * compStats[3])){
             document.getElementById("finish").style.visibility = "visible";
@@ -73,9 +86,6 @@ function updateLogs(val1, val2, whichPAct){
         if(lastCompAct === "attack"){
             compLog.innerHTML = "The enemy attacks for " + val1;
         }
-        if(lastCompAct === "coup"){
-            compLog.innerHTML = "The enemy tries to finish you for " + val1;
-        }
         if(whichPAct === 1){
             playerLog.innerHTML = "The player attacks for " + val2;
         }
@@ -86,30 +96,46 @@ function updateLogs(val1, val2, whichPAct){
             if(!val2){
                 playerLog.innerHTML = "The player tries to finish the enemy but fails";
             }
-            if(val2){
-                playerLog.innerHTML = "The player tries to finish the enemy and succeeds";
-            }
+        }
+    }
+    if(lastCompAct === "coup" && killSuc){
+        compLog.innerHTML = "The enemy lands a finishing blow and kills you";
+    }
+    else if(lastCompAct === "coup" && !killSuc){
+        compLog.innerHTML = "The enemy misses the finishing blow and fails";
+    }
+    if(whichPAct === 3){
+        if(val2){
+            playerLog.innerHTML = "The player tries to finish the enemy and succeeds";
         }
     }
 }
 
 function playerAction(a){
+    playerNaturalArmor = calcDefendVal(pSPE, pCUN, false);
+    computerNaturalArmor = calcDefendVal(cSPE, cCUN, false);
     if(a == 1){
         compVal = enemyAction(false);
-        attackVal = calcAttackVal(playerStats[0], playerStats[1], playerStats[2]);
+        attackVal = calcAttackVal(pSTR, pCUN, pSPE);
         if(lastCompAct === "defend"){
-            dmgTaken = calcDefendVal(playerStats[2], playerStats[1], false) - compVal
-            if(calcDefendVal(playerStats[2], playerStats[1], false) - compVal > 0){
-                dmgTaken = 0;
+            compDmgTaken = attackVal - compVal;
+            if(compDmgTaken < 0){
+                compDmgTaken = 0;
             }
-            compStats[3] -= dmgTaken;
+            compStats[3] -= compDmgTaken;
         }
         else if (lastCompAct === "attack"){
-            dmgTaken = calcDefendVal(playerStats[2], playerStats[1], false) - compVal
-            if(calcDefendVal(playerStats[2], playerStats[1], false) - compVal > 0){
-                dmgTaken = 0;
+            compVal = compVal - playerNaturalArmor;
+            attackVal -= computerNaturalArmor
+            if(compVal < 0){
+                compVal = 0;
             }
-            playerStats[3] += dmgTaken;
+            if(attackVal < 0){
+                attackVal = 0;
+            }
+            console.log(attackVal);
+            console.log(compVal);
+            playerStats[3] -= compVal;
             compStats[3] -= attackVal;
         }
         else{
@@ -119,7 +145,7 @@ function playerAction(a){
     }
     else if (a == 2){
         compVal = enemyAction(true);
-        defVal = calcDefendVal(playerStats[2], playerStats[1], true);
+        defVal = calcDefendVal(pSPE, pCUN, true);
         if(lastCompAct === "defend"){
             compStats[3] += randomNum(6, 1);
             if(compStats[3] > maxCF){
@@ -146,36 +172,40 @@ function playerAction(a){
             isCDefend = true;
         }
         if(compStats[3] < 0 || playerStats[3] >= (2 * compStats[3])){
-            lethalDMG = playerStats[0] + playerStats[2] - calcDefendVal(compStats[2], compStats[1], isCDefend);
+            lethalDMG = pSTR + pSPE - calcDefendVal(cSPE, cCUN, isCDefend);
             if(lethalDMG > 1){
                 gameOver = true;
             }
         }
         else if (lastCompAct === "attack"){
-            playerStats[3] = calcDefendVal(playerStats[2], playerStats[1], false) - compVal;
+            playerStats[3] -= calcDefendVal(pSPE, pCUN, false) - compVal;
         }
+        console.log(compVal);
         updateLogs(compVal, gameOver, 3);
     }
     updateStats();
 }
 
 function enemyAction(isPDefend){
-    console.log(gameOver);
     if(playerStats[3] < 0 || compStats[3] >= (2 * playerStats[3])){
         lastCompAct = "coup";
-        lethalDMG = compStats[0] + compStats[2] - calcDefendVal(playerStats[2], playerStats[1], isPDefend);
+        lethalDMG = cSTR + cSPE - calcDefendVal(pSPE, pCUN, isPDefend);
         if(lethalDMG > 1){
             gameOver = true;
+            killSuc = true;
+            return gameOver;
         }
+        killsuc = false;
+        return false;
     }
     randAction = randomNum(2, 1);
     if(randAction == 1){
         lastCompAct = "attack"
-        return calcAttackVal(compStats[0], compStats[1], compStats[2]);
+        return calcAttackVal(cSTR, cCUN, cSPE);
     } 
     else{
         lastCompAct = "defend";
-        return calcDefendVal(compStats[2], compStats[1], true)
+        return calcDefendVal(cSPE, cCUN, true)
     }
 }
 
